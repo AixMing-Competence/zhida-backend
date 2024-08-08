@@ -1,8 +1,5 @@
 package com.aixming.yudada.controller;
 
-import com.aixming.yudada.model.dto.app.*;
-import com.aixming.yudada.model.enums.ReviewStatusEnum;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.aixming.yudada.annotation.AuthCheck;
 import com.aixming.yudada.common.BaseResponse;
 import com.aixming.yudada.common.DeleteRequest;
@@ -11,11 +8,14 @@ import com.aixming.yudada.common.ResultUtils;
 import com.aixming.yudada.constant.UserConstant;
 import com.aixming.yudada.exception.BusinessException;
 import com.aixming.yudada.exception.ThrowUtils;
+import com.aixming.yudada.model.dto.app.*;
 import com.aixming.yudada.model.entity.App;
 import com.aixming.yudada.model.entity.User;
+import com.aixming.yudada.model.enums.ReviewStatusEnum;
 import com.aixming.yudada.model.vo.AppVO;
 import com.aixming.yudada.service.AppService;
 import com.aixming.yudada.service.UserService;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
@@ -240,8 +240,10 @@ public class AppController {
     public BaseResponse<Boolean> doReview(@RequestBody AppReviewRequest appReviewRequest) {
         ThrowUtils.throwIf(appReviewRequest == null || appReviewRequest.getId() <= 0, ErrorCode.PARAMS_ERROR);
         App app = appService.getById(appReviewRequest.getId());
-        appService.validApp(app,false);
+        appService.validApp(app, false);
         app.setReviewStatus(appReviewRequest.getReviewStatus());
+        String reviewMessage = appReviewRequest.getReviewMessage();
+        app.setReviewMessage(reviewMessage);
         // 操作数据库
         boolean result = appService.updateById(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

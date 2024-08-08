@@ -240,4 +240,11 @@ public class QuestionController {
     }
 
     // endregion
+
+    @PostMapping("/ai_generate")
+    public BaseResponse<List<QuestionContentDTO>> aiGenerate(@RequestBody AiGenerateQuestionRequest aiGenerateQuestionRequest) {
+        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
+        List<QuestionContentDTO> questionContentList = questionService.aiGenerateQuestion(aiGenerateQuestionRequest);
+        return ResultUtils.success(questionContentList);
+    }
 }

@@ -1,5 +1,7 @@
 package com.aixming.yudada.service;
 
+import com.aixming.yudada.model.dto.question.AiGenerateQuestionRequest;
+import com.aixming.yudada.model.dto.question.QuestionContentDTO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -8,6 +10,7 @@ import com.aixming.yudada.model.entity.Question;
 import com.aixming.yudada.model.vo.QuestionVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 应用题目服务
@@ -49,4 +52,6 @@ public interface QuestionService extends IService<Question> {
      * @return
      */
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
+
+    List<QuestionContentDTO> aiGenerateQuestion(AiGenerateQuestionRequest aiGenerateQuestionRequest);
 }

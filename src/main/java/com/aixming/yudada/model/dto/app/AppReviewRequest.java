@@ -21,5 +21,10 @@ public class AppReviewRequest implements Serializable {
      */
     private Integer reviewStatus;
 
+    /**
+     * 审核信息
+     */
+    private String reviewMessage;
+
     private static final long serialVersionUID = 1L;
 }

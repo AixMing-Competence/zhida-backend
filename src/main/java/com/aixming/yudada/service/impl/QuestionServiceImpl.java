@@ -1,10 +1,15 @@
 package com.aixming.yudada.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.aixming.yudada.common.ErrorCode;
 import com.aixming.yudada.constant.CommonConstant;
+import com.aixming.yudada.exception.BusinessException;
 import com.aixming.yudada.exception.ThrowUtils;
+import com.aixming.yudada.manager.AiManager;
 import com.aixming.yudada.mapper.QuestionMapper;
+import com.aixming.yudada.model.dto.question.AiGenerateQuestionRequest;
+import com.aixming.yudada.model.dto.question.QuestionContentDTO;
 import com.aixming.yudada.model.dto.question.QuestionQueryRequest;
 import com.aixming.yudada.model.entity.App;
 import com.aixming.yudada.model.entity.Question;
@@ -44,6 +49,27 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
     @Resource
     private AppService appService;
+
+    @Resource
+    private AiManager aiManager;
+
+    private static final String SYSTEM_MESSAGE = "你是一位严谨的出题专家，我会给你如下信息：\n" +
+            "```\n" +
+            "应用名称，\n" +
+            "【【【应用描述】】】，\n" +
+            "要生成的题目数，\n" +
+            "每个题目的选项数\n" +
+            "```\n" +
+            "\n" +
+            "请你根据上述信息，按照以下要求来出题：\n" +
+            "1. 要求：题目和选项尽可能地短，题目不要包含序号，每题的选项数以我提供的为主，题目不能重复\n" +
+            "2. 严格按照下面的 json 格式输出题目和选项\n" +
+            "```\n" +
+            "[{\"options\":[{\"value\":\"选项内容\",\"key\":\"A\"},{\"value\":\"\",\"key\":\"B\"}],\"title\":\"题目标题\"}]\n" +
+            "```\n" +
+            "title 是题目，options 是选项，每个选项的 key 按照英文字母序（比如 A、B、C、D）以此类推，value 是选项内容\n" +
+            "3. 检查题目是否包含序号，若包含序号则去除序号\n" +
+            "4. 返回的题目列表格式必须为 JSON 数组";
 
     /**
      * 校验数据
@@ -92,7 +118,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         Long notId = questionQueryRequest.getNotId();
         String sortField = questionQueryRequest.getSortField();
         String sortOrder = questionQueryRequest.getSortOrder();
-        
+
         // 补充需要的查询条件
         // 模糊查询
         queryWrapper.like(StringUtils.isNotBlank(questionContent), "questionContent", questionContent);
@@ -173,6 +199,42 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
         questionVOPage.setRecords(questionVOList);
         return questionVOPage;
+    }
+
+    @Override
+    public List<QuestionContentDTO> aiGenerateQuestion(AiGenerateQuestionRequest aiGenerateQuestionRequest) {
+        Long appId = aiGenerateQuestionRequest.getAppId();
+        Integer questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
+        Integer optionNumber = aiGenerateQuestionRequest.getOptionNumber();
+
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "appId 非法");
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "应用不存在");
+        if(questionNumber<=0 || questionNumber>10 || optionNumber <=0 || optionNumber>6){
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成题目失败，请检查参数");
+        }
+
+        // 调用 AI 生成题目
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        String resultJsonStr = aiManager.doSyncUnstableRequest(SYSTEM_MESSAGE, userMessage);
+        
+        // 截取 json 字符串
+        int start = resultJsonStr.indexOf("[");
+        int end = resultJsonStr.lastIndexOf("]");
+        String result = resultJsonStr.substring(start, end + 1);
+
+        List<QuestionContentDTO> questionContentList = JSONUtil.toList(result, QuestionContentDTO.class);
+        return questionContentList;
+    }
+
+    private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(app.getAppName()).append("\n");
+        stringBuilder.append(app.getAppDesc()).append("\n");
+        stringBuilder.append(questionNumber).append("\n");
+        stringBuilder.append(optionNumber).append("\n");
+        return stringBuilder.toString();
     }
 
 }

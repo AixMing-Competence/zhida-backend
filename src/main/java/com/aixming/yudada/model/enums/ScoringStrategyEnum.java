@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  */
 @Getter
 public enum ScoringStrategyEnum {
-    custom("自定义", 0),
+    CUSTOM("自定义", 0),
     AI("AI", 1);
 
     private final String text;

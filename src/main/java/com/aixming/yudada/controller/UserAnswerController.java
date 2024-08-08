@@ -1,7 +1,6 @@
 package com.aixming.yudada.controller;
 
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.aixming.yudada.annotation.AuthCheck;
 import com.aixming.yudada.common.BaseResponse;
 import com.aixming.yudada.common.DeleteRequest;
@@ -14,11 +13,15 @@ import com.aixming.yudada.model.dto.userAnswer.UserAnswerAddRequest;
 import com.aixming.yudada.model.dto.userAnswer.UserAnswerEditRequest;
 import com.aixming.yudada.model.dto.userAnswer.UserAnswerQueryRequest;
 import com.aixming.yudada.model.dto.userAnswer.UserAnswerUpdateRequest;
-import com.aixming.yudada.model.entity.UserAnswer;
+import com.aixming.yudada.model.entity.App;
 import com.aixming.yudada.model.entity.User;
+import com.aixming.yudada.model.entity.UserAnswer;
 import com.aixming.yudada.model.vo.UserAnswerVO;
+import com.aixming.yudada.scoring.ScoringStrategyExecutor;
+import com.aixming.yudada.service.AppService;
 import com.aixming.yudada.service.UserAnswerService;
 import com.aixming.yudada.service.UserService;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +45,12 @@ public class UserAnswerController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AppService appService;
+
+    @Resource
+    private ScoringStrategyExecutor scoringStrategyExecutor;
 
     // region 增删改查
 
@@ -70,6 +79,12 @@ public class UserAnswerController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         // 返回新写入的数据 id
         long newUserAnswerId = userAnswer.getId();
+        // 评分
+        App app = appService.getById(userAnswerAddRequest.getAppId());
+        UserAnswer userAnswerWithResult = scoringStrategyExecutor.doScore(choices, app);
+        userAnswerWithResult.setId(newUserAnswerId);
+        userAnswerService.updateById(userAnswerWithResult);
+
         return ResultUtils.success(newUserAnswerId);
     }
 
@@ -171,7 +186,7 @@ public class UserAnswerController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<UserAnswerVO>> listUserAnswerVOByPage(@RequestBody UserAnswerQueryRequest userAnswerQueryRequest,
-                                                               HttpServletRequest request) {
+                                                                   HttpServletRequest request) {
         long current = userAnswerQueryRequest.getCurrent();
         long size = userAnswerQueryRequest.getPageSize();
         // 限制爬虫
@@ -192,7 +207,7 @@ public class UserAnswerController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<UserAnswerVO>> listMyUserAnswerVOByPage(@RequestBody UserAnswerQueryRequest userAnswerQueryRequest,
-                                                                 HttpServletRequest request) {
+                                                                     HttpServletRequest request) {
         ThrowUtils.throwIf(userAnswerQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 补充查询条件，只查询当前登录用户的数据
         User loginUser = userService.getLoginUser(request);
@@ -243,4 +258,5 @@ public class UserAnswerController {
     }
 
     // endregion
+    
 }

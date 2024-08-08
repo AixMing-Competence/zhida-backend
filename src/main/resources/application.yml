@@ -19,7 +19,7 @@ spring:
   # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.115.10:3306/yudada
+    url: jdbc:mysql://192.168.17.10:3306/yudada
     username: root
     password: root
   # Redis 配置
@@ -37,7 +37,6 @@ spring:
       max-file-size: 10MB
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
-    time-zone: GMT+8
 server:
   address: 0.0.0.0
   port: 8101
@@ -75,3 +74,5 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.aixming.yudada.controller
+ai:
+  apiSecretKey: 89c4d26290974a804249f6dd6d0859d1.0V9bHF5ymXvS7zmo
