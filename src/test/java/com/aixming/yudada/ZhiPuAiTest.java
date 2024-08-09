@@ -6,11 +6,14 @@ import com.zhipu.oapi.service.v4.model.ChatCompletionRequest;
 import com.zhipu.oapi.service.v4.model.ChatMessage;
 import com.zhipu.oapi.service.v4.model.ChatMessageRole;
 import com.zhipu.oapi.service.v4.model.ModelApiResponse;
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Duzeming
@@ -37,5 +40,18 @@ public class ZhiPuAiTest {
         ModelApiResponse invokeModelApiResp = client.invokeModelApi(chatCompletionRequest);
         System.out.println("model output:" + invokeModelApiResp.getMsg());
         invokeModelApiResp.getData().getChoices().get(0).getMessage().getContent();
+    }
+    
+    @Test
+    void RxJavaDemo() throws InterruptedException {
+        Flowable<Long> flowable = Flowable.interval(1, TimeUnit.SECONDS)
+                .map(i -> i + 1)
+                .subscribeOn(Schedulers.io());
+
+        flowable.observeOn(Schedulers.io())
+                .doOnNext(System.out::println)
+                .subscribe();
+        
+        Thread.sleep(10000);
     }
 }

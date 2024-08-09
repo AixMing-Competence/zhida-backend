@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.aixming.yudada.model.dto.question.QuestionQueryRequest;
 import com.aixming.yudada.model.entity.Question;
 import com.aixming.yudada.model.vo.QuestionVO;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -54,4 +55,6 @@ public interface QuestionService extends IService<Question> {
     Page<QuestionVO> getQuestionVOPage(Page<Question> questionPage, HttpServletRequest request);
 
     List<QuestionContentDTO> aiGenerateQuestion(AiGenerateQuestionRequest aiGenerateQuestionRequest);
+
+    SseEmitter aiGenerateQuestionSSE(AiGenerateQuestionRequest aiGenerateQuestionRequest);
 }

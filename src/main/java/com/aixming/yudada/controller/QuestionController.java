@@ -19,6 +19,7 @@ import com.aixming.yudada.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -246,5 +247,12 @@ public class QuestionController {
         ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
         List<QuestionContentDTO> questionContentList = questionService.aiGenerateQuestion(aiGenerateQuestionRequest);
         return ResultUtils.success(questionContentList);
+    }
+    
+    @GetMapping("/ai_generate/sse")
+    public SseEmitter aiGenerateSSE(@RequestBody AiGenerateQuestionRequest aiGenerateQuestionRequest){
+        ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
+        SseEmitter sseEmitter = questionService.aiGenerateQuestionSSE(aiGenerateQuestionRequest);
+        return sseEmitter;
     }
 }
