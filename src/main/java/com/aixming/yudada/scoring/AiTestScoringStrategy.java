@@ -14,8 +14,6 @@ import com.aixming.yudada.service.QuestionService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -35,9 +33,6 @@ public class AiTestScoringStrategy implements ScoringStrategy {
     private QuestionService questionService;
 
     @Resource
-    private RedissonClient redissonClient;
-
-    @Resource
     private AiManager aiManager;
 
     /**
@@ -49,10 +44,10 @@ public class AiTestScoringStrategy implements ScoringStrategy {
                     .expireAfterAccess(1, TimeUnit.DAYS)
                     .build();
 
-    /**
-     * 分布式锁 key
-     */
-    private static final String AI_ANSWER_LOCK = "AI_ANSWER_LOCK";
+    // /**
+    //  * 分布式锁 key
+    //  */
+    // private static final String AI_ANSWER_LOCK = "AI_ANSWER_LOCK";
 
     public static final String SYSTEM_MESSAGE = "你是一名严谨的判题专家，我会给你如下信息：\n" +
             "```\n" +
@@ -89,14 +84,14 @@ public class AiTestScoringStrategy implements ScoringStrategy {
         }
 
         // 定义锁
-        RLock lock = redissonClient.getLock(AI_ANSWER_LOCK + cacheKey);
+        // RLock lock = redissonClient.getLock(AI_ANSWER_LOCK + cacheKey);
 
         try {
             // 竞争锁，waitTime，leaseTime
-            boolean res = lock.tryLock(3, 15, TimeUnit.SECONDS);
-            if (!res) {
-                return null;
-            }
+            // boolean res = lock.tryLock(3, 15, TimeUnit.SECONDS);
+            // if (!res) {
+            //     return null;
+            // }
             // 2. 调用 AI 评分
             List<QuestionContentDTO> questionContent = QuestionVO.objToVo(question).getQuestionContent();
             String userMessage = getAiUserMessage(app, questionContent, choices);
@@ -120,12 +115,12 @@ public class AiTestScoringStrategy implements ScoringStrategy {
             return userAnswer;
         } finally {
             // 保证锁一定会被释放掉
-            if (lock != null && lock.isLocked()) {
-                // 防止锁自动释放后释放掉别人的锁
-                if (lock.isHeldByCurrentThread()) {
-                    lock.unlock();
-                }
-            }
+            // if (lock != null && lock.isLocked()) {
+            //     // 防止锁自动释放后释放掉别人的锁
+            //     if (lock.isHeldByCurrentThread()) {
+            //         lock.unlock();
+            //     }
+            // }
         }
     }
 

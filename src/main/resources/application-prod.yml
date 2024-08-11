@@ -18,15 +18,9 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.17.10:3306/yudada
+    url: jdbc:mysql://10.23.102.23:3306/yudada
     username: root
-    password: root
-  # Redis 配置
-  redis:
-    host: 192.168.17.10
-    database: 1
-    timeout: 5000
-    port: 6379
+    password: Duzeming001212
   # 文件上传
   servlet:
     multipart:
