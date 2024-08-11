@@ -1,5 +1,6 @@
 package com.aixming.yudada.controller;
 
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.json.JSONUtil;
 import com.aixming.yudada.annotation.AuthCheck;
 import com.aixming.yudada.common.BaseResponse;
@@ -24,6 +25,7 @@ import com.aixming.yudada.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -75,13 +77,24 @@ public class UserAnswerController {
         User loginUser = userService.getLoginUser(request);
         userAnswer.setUserId(loginUser.getId());
         // 写入数据库
-        boolean result = userAnswerService.save(userAnswer);
+        boolean result = false;
+        try {
+            result = userAnswerService.save(userAnswer);
+        } catch (DuplicateKeyException e) {
+            // ignore error
+        }
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         // 返回新写入的数据 id
         long newUserAnswerId = userAnswer.getId();
         // 评分
         App app = appService.getById(userAnswerAddRequest.getAppId());
-        UserAnswer userAnswerWithResult = scoringStrategyExecutor.doScore(choices, app);
+        UserAnswer userAnswerWithResult = null;
+        try {
+            userAnswerWithResult = scoringStrategyExecutor.doScore(choices, app);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "评分错误");
+        }
         userAnswerWithResult.setId(newUserAnswerId);
         userAnswerService.updateById(userAnswerWithResult);
 
@@ -258,5 +271,14 @@ public class UserAnswerController {
     }
 
     // endregion
-    
+
+    /**
+     * 雪花算法生成唯一 id
+     *
+     * @return
+     */
+    @GetMapping("/generate/id")
+    public BaseResponse<Long> generateUserAnswerId() {
+        return ResultUtils.success(IdUtil.getSnowflakeNextId());
+    }
 }

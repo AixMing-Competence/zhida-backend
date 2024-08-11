@@ -11,5 +11,5 @@ import java.util.List;
  */
 public interface ScoringStrategy {
     
-    UserAnswer doScore(List<String> choices, App app);
+    UserAnswer doScore(List<String> choices, App app) throws InterruptedException;
 }

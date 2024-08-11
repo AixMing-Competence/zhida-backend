@@ -250,7 +250,7 @@ public class QuestionController {
     }
     
     @GetMapping("/ai_generate/sse")
-    public SseEmitter aiGenerateSSE(@RequestBody AiGenerateQuestionRequest aiGenerateQuestionRequest){
+    public SseEmitter aiGenerateSSE(AiGenerateQuestionRequest aiGenerateQuestionRequest){
         ThrowUtils.throwIf(aiGenerateQuestionRequest == null, ErrorCode.PARAMS_ERROR);
         SseEmitter sseEmitter = questionService.aiGenerateQuestionSSE(aiGenerateQuestionRequest);
         return sseEmitter;
