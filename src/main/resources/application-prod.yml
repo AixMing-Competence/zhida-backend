@@ -29,10 +29,13 @@ server:
   port: 8101
   servlet:
     context-path: /api
-    # cookie 30 天过期
     session:
       cookie:
+        # cookie 30 天过期
         max-age: 2592000
+        # 解决跨域
+        same-site: none
+        secure: true
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
