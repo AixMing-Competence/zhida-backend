@@ -72,4 +72,4 @@ knife4j:
         api-rule-resources:
           - com.aixming.yudada.controller
 ai:
-  apiSecretKey: 89c4d26290974a804249f6dd6d0859d1.0V9bHF5ymXvS7zmo
+  apiSecretKey: xxx
