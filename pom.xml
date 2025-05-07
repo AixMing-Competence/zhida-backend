@@ -10,9 +10,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.aixming</groupId>
-    <artifactId>yudada-backend</artifactId>
+    <artifactId>zhida-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>yudada-backend</name>
+    <name>zhida-backend</name>
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>

@@ -70,6 +70,8 @@ knife4j:
       default:
         api-rule: package
         api-rule-resources:
-          - com.aixming.yudada.controller
+          - com.aixming.zhida.controller
 ai:
   apiSecretKey: xxx
+codesandbox:
+  type: com.aixming.zhida.judge.codesandbox.impl.JavaNativeCodeSandbox
