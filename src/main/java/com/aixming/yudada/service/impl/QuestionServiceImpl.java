@@ -29,6 +29,7 @@ import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -230,8 +231,9 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         int start = resultJsonStr.indexOf("[");
         int end = resultJsonStr.lastIndexOf("]");
         String result = resultJsonStr.substring(start, end + 1);
+        String escape = StringEscapeUtils.unescapeJson(result);
 
-        List<QuestionContentDTO> questionContentList = JSONUtil.toList(result, QuestionContentDTO.class);
+        List<QuestionContentDTO> questionContentList = JSONUtil.toList(escape, QuestionContentDTO.class);
         return questionContentList;
     }
 

@@ -4,7 +4,7 @@ spring:
     name: yudada-backend
   # 默认 dev 环境
   profiles:
-    active: dev
+    active: local
   # 支持 swagger3
   mvc:
     pathmatch:
@@ -18,9 +18,9 @@ spring:
   # 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.17.10:3306/yudada
+    url: jdbc:mysql:///zhida
     username: root
-    password: root
+    password: 123456
   # Redis 配置
   redis:
     host: 192.168.17.10
@@ -36,7 +36,7 @@ spring:
     date-format: yyyy-MM-dd HH:mm:ss
 server:
   address: 0.0.0.0
-  port: 8101
+  port: 8120
   servlet:
     context-path: /api
     # cookie 30 天过期

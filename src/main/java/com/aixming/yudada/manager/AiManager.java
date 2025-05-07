@@ -56,7 +56,7 @@ public class AiManager {
      */
     public Flowable<ModelData> doStreamRequest(List<ChatMessage> messages, Float temperature) {
         ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
-                .model(Constants.ModelChatGLM4)
+                .model(Constants.ModelChatGLM4Flash)
                 .stream(Boolean.TRUE)
                 .temperature(temperature)
                 .invokeMethod(Constants.invokeMethod)
@@ -127,7 +127,7 @@ public class AiManager {
      */
     public String doRequest(List<ChatMessage> messages, Boolean stream, Float temperature) {
         ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
-                .model(Constants.ModelChatGLM4)
+                .model(Constants.ModelChatGLM4Flash)
                 .stream(stream)
                 .temperature(temperature)
                 .invokeMethod(Constants.invokeMethod)
