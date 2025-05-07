@@ -1,6 +1,7 @@
 package com.aixming.yudada.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.aixming.yudada.common.ErrorCode;
 import com.aixming.yudada.constant.CommonConstant;
@@ -23,16 +24,22 @@ import com.aixming.yudada.utils.SqlUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zhipu.oapi.service.v4.model.ModelData;
+import io.reactivex.Flowable;
+import io.reactivex.schedulers.Schedulers;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -211,14 +218,14 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "appId 非法");
         App app = appService.getById(appId);
         ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "应用不存在");
-        if(questionNumber<=0 || questionNumber>10 || optionNumber <=0 || optionNumber>6){
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"生成题目失败，请检查参数");
+        if (questionNumber <= 0 || questionNumber > 10 || optionNumber <= 0 || optionNumber > 6) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成题目失败，请检查参数");
         }
 
         // 调用 AI 生成题目
         String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
         String resultJsonStr = aiManager.doSyncUnstableRequest(SYSTEM_MESSAGE, userMessage);
-        
+
         // 截取 json 字符串
         int start = resultJsonStr.indexOf("[");
         int end = resultJsonStr.lastIndexOf("]");
@@ -226,6 +233,64 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
 
         List<QuestionContentDTO> questionContentList = JSONUtil.toList(result, QuestionContentDTO.class);
         return questionContentList;
+    }
+
+    @Override
+    public SseEmitter aiGenerateQuestionSSE(AiGenerateQuestionRequest aiGenerateQuestionRequest) {
+        Long appId = aiGenerateQuestionRequest.getAppId();
+        Integer questionNumber = aiGenerateQuestionRequest.getQuestionNumber();
+        Integer optionNumber = aiGenerateQuestionRequest.getOptionNumber();
+
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "appId 非法");
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.PARAMS_ERROR, "应用不存在");
+        if (questionNumber <= 0 || questionNumber > 10 || optionNumber <= 0 || optionNumber > 6) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成题目失败，请检查参数");
+        }
+
+        SseEmitter sseEmitter = new SseEmitter(0L);
+        // 计数器
+        AtomicInteger atomicInteger = new AtomicInteger(0);
+        // 用于拼接完整的一道题目
+        StringBuilder stringBuilder = new StringBuilder();
+
+        // 调用 AI 生成题目
+        String userMessage = getGenerateQuestionUserMessage(app, questionNumber, optionNumber);
+        Flowable<ModelData> modelDataFlowable = aiManager.doStreamRequest(SYSTEM_MESSAGE, userMessage, null);
+        modelDataFlowable.observeOn(Schedulers.io())
+                .map(modelData -> modelData.getChoices().get(0).getDelta().getContent())
+                .map(message -> message.replace("\\s", ""))
+                .filter(StrUtil::isNotBlank)
+                .flatMap(message -> {
+                    ArrayList<Character> characters = new ArrayList<>();
+                    for (char c : message.toCharArray()) {
+                        characters.add(c);
+                    }
+                    return Flowable.fromIterable(characters);
+                })
+                // 截取完整的一道题目
+                .doOnNext(c -> {
+                    if (c == '{') {
+                        atomicInteger.addAndGet(1);
+                    }
+                    if (atomicInteger.get() > 0) {
+                        stringBuilder.append(c);
+                    }
+                    if (c == '}') {
+                        atomicInteger.addAndGet(-1);
+                        if (atomicInteger.get() == 0) {
+                            // 将完整题目返回给前端
+                            sseEmitter.send(JSONUtil.toJsonStr(stringBuilder));
+                            // 重置
+                            stringBuilder.setLength(0);
+                        }
+                    }
+                })
+                .doOnError(e -> log.error("sse error", e))
+                .doOnComplete(sseEmitter::complete)
+                .subscribe();
+        return sseEmitter;
     }
 
     private String getGenerateQuestionUserMessage(App app, int questionNumber, int optionNumber) {

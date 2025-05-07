@@ -24,7 +24,7 @@ public class ScoringStrategyExecutor {
     @Resource
     private List<ScoringStrategy> scoringStrategyList;
 
-    public UserAnswer doScore(List<String> choices, App app) {
+    public UserAnswer doScore(List<String> choices, App app) throws InterruptedException {
         AppTypeEnum appTypeEnum = AppTypeEnum.getEnumByValue(app.getAppType());
         ScoringStrategyEnum scoringStrategyEnum = ScoringStrategyEnum.getEnumByValue(app.getScoringStrategy());
         ThrowUtils.throwIf(appTypeEnum == null || scoringStrategyEnum == null, ErrorCode.SYSTEM_ERROR, "应用配置有误，未找到匹配的策略");

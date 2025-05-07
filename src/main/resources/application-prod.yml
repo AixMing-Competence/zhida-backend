@@ -1,29 +1,59 @@
-# 线上配置文件
-server:
-  port: 8101
+# 公共配置文件
 spring:
+  application:
+    name: yudada-backend
+  # 支持 swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  # session 配置
+  session:
+    # todo 取消注释开启分布式 session（须先配置 Redis）
+    # store-type: redis
+    # 30 天过期
+    timeout: 2592000
   # 数据库配置
-  # todo 需替换配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_db
+    url: jdbc:mysql://10.23.102.23:3306/yudada
     username: root
-    password: 123456
-  # Redis 配置
-  # todo 需替换配置
-  redis:
-    database: 1
-    host: localhost
-    port: 6379
-    timeout: 5000
-    password: 123456
+    password: Duzeming001212
+  # 文件上传
+  servlet:
+    multipart:
+      # 大小限制
+      max-file-size: 10MB
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+server:
+  port: 8101
+  servlet:
+    context-path: /api
+    session:
+      cookie:
+        # cookie 30 天过期
+        max-age: 2592000
+        # 解决跨域
+        same-site: none
+        secure: true
 mybatis-plus:
   configuration:
-    # 生产环境关闭日志
-    log-impl: ''
+    map-underscore-to-camel-case: false
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名
+      logic-delete-value: 1 # 逻辑已删除值（默认为 1）
+      logic-not-delete-value: 0 # 逻辑未删除值（默认为 0）
 # 接口文档配置
 knife4j:
-  basic:
-    enable: true
-    username: root
-    password: 123456
+  enable: true
+  openapi:
+    title: "接口文档"
+    version: 1.0
+    group:
+      default:
+        api-rule: package
+        api-rule-resources:
+          - com.aixming.yudada.controller
+ai:
+  apiSecretKey: 89c4d26290974a804249f6dd6d0859d1.0V9bHF5ymXvS7zmo

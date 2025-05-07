@@ -2,10 +2,8 @@ package com.aixming.yudada.manager;
 
 import com.zhipu.oapi.ClientV4;
 import com.zhipu.oapi.Constants;
-import com.zhipu.oapi.service.v4.model.ChatCompletionRequest;
-import com.zhipu.oapi.service.v4.model.ChatMessage;
-import com.zhipu.oapi.service.v4.model.ChatMessageRole;
-import com.zhipu.oapi.service.v4.model.ModelApiResponse;
+import com.zhipu.oapi.service.v4.model.*;
+import io.reactivex.Flowable;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -31,6 +29,42 @@ public class AiManager {
      * 不稳定的随机数
      */
     private static final float UNSTABLE_TEMPERATURE = 0.99f;
+
+    /**
+     * 通用流式请求（简化消息传递）
+     *
+     * @param systemMessage
+     * @param userMessage
+     * @param temperature
+     * @return
+     */
+    public Flowable<ModelData> doStreamRequest(String systemMessage, String userMessage, Float temperature) {
+        ArrayList<ChatMessage> messages = new ArrayList<>();
+        ChatMessage systemChatMessage = new ChatMessage(ChatMessageRole.SYSTEM.value(), systemMessage);
+        messages.add(systemChatMessage);
+        ChatMessage userChatMessage = new ChatMessage(ChatMessageRole.USER.value(), userMessage);
+        messages.add(userChatMessage);
+        return doStreamRequest(messages, temperature);
+    }
+
+    /**
+     * 通用流式请求
+     *
+     * @param messages
+     * @param temperature
+     * @return
+     */
+    public Flowable<ModelData> doStreamRequest(List<ChatMessage> messages, Float temperature) {
+        ChatCompletionRequest chatCompletionRequest = ChatCompletionRequest.builder()
+                .model(Constants.ModelChatGLM4)
+                .stream(Boolean.TRUE)
+                .temperature(temperature)
+                .invokeMethod(Constants.invokeMethod)
+                .messages(messages)
+                .build();
+        ModelApiResponse invokeModelApiResp = client.invokeModelApi(chatCompletionRequest);
+        return invokeModelApiResp.getFlowable();
+    }
 
     /**
      * 同步请求（答案不稳定）
