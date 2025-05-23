@@ -1,7 +1,7 @@
 # 公共配置文件
 spring:
   application:
-    name: yudada-backend
+    name: zhida-backend
   # 默认 dev 环境
   profiles:
     active: local
@@ -23,7 +23,7 @@ spring:
     password: 123456
   # Redis 配置
   redis:
-    host: 192.168.17.10
+    host: localhost
     database: 1
     timeout: 5000
     port: 6379
@@ -34,6 +34,9 @@ spring:
       max-file-size: 10MB
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
+  rabbitmq:
+    host: 192.168.115.131
+    port: 5672
 server:
   address: 0.0.0.0
   port: 8120

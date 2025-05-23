@@ -1,21 +1,16 @@
 package com.aixming.zhida.controller;
 
 import cn.hutool.core.io.FileUtil;
-import com.aixming.zhida.manager.CosManager;
-import com.aixming.zhida.service.UserService;
 import com.aixming.zhida.common.BaseResponse;
 import com.aixming.zhida.common.ErrorCode;
 import com.aixming.zhida.common.ResultUtils;
 import com.aixming.zhida.constant.FileConstant;
 import com.aixming.zhida.exception.BusinessException;
+import com.aixming.zhida.manager.CosManager;
 import com.aixming.zhida.model.dto.file.UploadFileRequest;
 import com.aixming.zhida.model.entity.User;
 import com.aixming.zhida.model.enums.FileUploadBizEnum;
-
-import java.io.File;
-import java.util.Arrays;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import com.aixming.zhida.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +18,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * 文件接口
@@ -40,6 +41,16 @@ public class FileController {
     @Resource
     private CosManager cosManager;
 
+    public static void main(String[] args) throws IOException {
+        String tempDirPath = System.getProperty("user.dir") + File.separator + ".temp";
+        String filepath = "/1/hello1.png";
+        File file = new File(tempDirPath, filepath);
+        file.createNewFile();
+//        if (!file.exists()) {
+//            FileUtil.touch(file);
+//        }
+    }
+
     /**
      * 文件上传
      *
@@ -50,7 +61,7 @@ public class FileController {
      */
     @PostMapping("/upload")
     public BaseResponse<String> uploadFile(@RequestPart("file") MultipartFile multipartFile,
-            UploadFileRequest uploadFileRequest, HttpServletRequest request) {
+                                           UploadFileRequest uploadFileRequest, HttpServletRequest request) {
         String biz = uploadFileRequest.getBiz();
         FileUploadBizEnum fileUploadBizEnum = FileUploadBizEnum.getEnumByValue(biz);
         if (fileUploadBizEnum == null) {
@@ -62,10 +73,14 @@ public class FileController {
         String uuid = RandomStringUtils.randomAlphanumeric(8);
         String filename = uuid + "-" + multipartFile.getOriginalFilename();
         String filepath = String.format("/%s/%s/%s", fileUploadBizEnum.getValue(), loginUser.getId(), filename);
-        File file = null;
+
+        String tempDirPath = System.getProperty("user.dir") + File.separator + ".temp";
+        File file = new File(tempDirPath, filepath);
+        if (!file.exists()) {
+            FileUtil.touch(file);
+        }
         try {
             // 上传文件
-            file = File.createTempFile(filepath, null);
             multipartFile.transferTo(file);
             cosManager.putObject(filepath, file);
             // 返回可访问地址
@@ -96,7 +111,7 @@ public class FileController {
         // 文件后缀
         String fileSuffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
         final long ONE_M = 1024 * 1024L;
-        if (FileUploadBizEnum.USER_AVATAR.equals(fileUploadBizEnum)) {
+        if (FileUploadBizEnum.USER_AVATAR.equals(fileUploadBizEnum) || FileUploadBizEnum.APP_PICTURE.equals(fileUploadBizEnum)) {
             if (fileSize > ONE_M) {
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "文件大小不能超过 1M");
             }

@@ -1,9 +1,10 @@
 package com.aixming.zhida.model.enums;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * 文件上传业务类型枚举
@@ -11,8 +12,11 @@ import org.apache.commons.lang3.ObjectUtils;
  * @author AixMing
  */
 public enum FileUploadBizEnum {
-
-    USER_AVATAR("用户头像", "user_avatar");
+    /**
+     *
+     */
+    USER_AVATAR("用户头像", "user_avatar"),
+    APP_PICTURE("应用图片", "app_picture");
 
     private final String text;
 
