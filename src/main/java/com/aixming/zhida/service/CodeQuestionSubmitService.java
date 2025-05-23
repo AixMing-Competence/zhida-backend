@@ -23,7 +23,7 @@ public interface CodeQuestionSubmitService extends IService<CodeQuestionSubmit> 
      * 校验数据
      *
      * @param codeQuestionSubmit
-     * @param add            对创建的数据进行校验
+     * @param add                对创建的数据进行校验
      */
     void validCodeQuestionSubmit(CodeQuestionSubmit codeQuestionSubmit, boolean add);
 
@@ -61,4 +61,13 @@ public interface CodeQuestionSubmitService extends IService<CodeQuestionSubmit> 
      * @return
      */
     long doCodeQuestionSubmit(CodeQuestionSubmitAddRequest codeQuestionSubmitAddRequest, User loginUser);
+
+    /**
+     * 提交题目并进行 ai 判题
+     *
+     * @param codeQuestionSubmitAddRequest
+     * @param loginUser
+     * @return
+     */
+    long doAiCodeQuestionSubmit(CodeQuestionSubmitAddRequest codeQuestionSubmitAddRequest, User loginUser);
 }

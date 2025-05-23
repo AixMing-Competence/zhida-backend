@@ -43,7 +43,7 @@ public class CodeQuestionSubmitController {
     private UserService userService;
 
     /**
-     * 提交题目
+     * 提交题目并判题
      *
      * @param codeQuestionSubmitAddRequest
      * @param request
@@ -57,6 +57,24 @@ public class CodeQuestionSubmitController {
         // 是否登录
         User loginUser = userService.getLoginUser(request);
         long codeQuestionSubmitId = codeQuestionSubmitService.doCodeQuestionSubmit(codeQuestionSubmitAddRequest, loginUser);
+        return ResultUtils.success(codeQuestionSubmitId);
+    }
+
+    /**
+     * 提交题目并进行 ai 判题
+     *
+     * @param codeQuestionSubmitAddRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/ai")
+    public BaseResponse<Long> doAiCodeQuestionSubmit(@RequestBody CodeQuestionSubmitAddRequest codeQuestionSubmitAddRequest, HttpServletRequest request) {
+        if (codeQuestionSubmitAddRequest == null || codeQuestionSubmitAddRequest.getQuestionId() <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 是否登录
+        User loginUser = userService.getLoginUser(request);
+        long codeQuestionSubmitId = codeQuestionSubmitService.doAiCodeQuestionSubmit(codeQuestionSubmitAddRequest, loginUser);
         return ResultUtils.success(codeQuestionSubmitId);
     }
 
@@ -182,7 +200,7 @@ public class CodeQuestionSubmitController {
      */
     @PostMapping("/list/page/vo")
     public BaseResponse<Page<CodeQuestionSubmitVO>> listQuestionSubmitVOByPage(@RequestBody CodeQuestionSubmitQueryRequest questionsubmitQueryRequest,
-                                                                           HttpServletRequest request) {
+                                                                               HttpServletRequest request) {
         long current = questionsubmitQueryRequest.getCurrent();
         long size = questionsubmitQueryRequest.getPageSize();
         // 限制爬虫
@@ -203,7 +221,7 @@ public class CodeQuestionSubmitController {
      */
     @PostMapping("/my/list/page/vo")
     public BaseResponse<Page<CodeQuestionSubmitVO>> listMyQuestionSubmitVOByPage(@RequestBody CodeQuestionSubmitQueryRequest questionsubmitQueryRequest,
-                                                                             HttpServletRequest request) {
+                                                                                 HttpServletRequest request) {
         ThrowUtils.throwIf(questionsubmitQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 补充查询条件，只查询当前登录用户的数据
         User loginUser = userService.getLoginUser(request);

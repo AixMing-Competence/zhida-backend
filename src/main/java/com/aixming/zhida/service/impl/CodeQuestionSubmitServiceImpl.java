@@ -1,16 +1,17 @@
 package com.aixming.zhida.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.aixming.zhida.common.ErrorCode;
 import com.aixming.zhida.constant.CommonConstant;
 import com.aixming.zhida.exception.ThrowUtils;
+import com.aixming.zhida.judge.codesandbox.model.JudgeInfo;
 import com.aixming.zhida.judge.codesandbox.service.JudgeService;
+import com.aixming.zhida.manager.AiManager;
 import com.aixming.zhida.mapper.CodeQuestionSubmitMapper;
 import com.aixming.zhida.model.dto.codequestionsubmit.CodeQuestionSubmitAddRequest;
 import com.aixming.zhida.model.dto.codequestionsubmit.CodeQuestionSubmitQueryRequest;
-import com.aixming.zhida.model.entity.CodeQuestion;
-import com.aixming.zhida.model.entity.CodeQuestionSubmit;
-import com.aixming.zhida.model.entity.User;
+import com.aixming.zhida.model.entity.*;
 import com.aixming.zhida.model.enums.CodeQuestionSubmitLanguageEnum;
 import com.aixming.zhida.model.enums.CodeQuestionSubmitStatusEnum;
 import com.aixming.zhida.model.vo.CodeQuestionSubmitVO;
@@ -21,6 +22,7 @@ import com.aixming.zhida.utils.SqlUtils;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.zhipu.oapi.service.v4.model.Choice;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +56,23 @@ public class CodeQuestionSubmitServiceImpl extends ServiceImpl<CodeQuestionSubmi
     @Resource
     @Lazy
     private JudgeService judgeService;
+
+    @Resource
+    private AiManager aiManager;
+
+    private static final String CODE_SYSTEM_MESSAGE = "你是一个严谨的算法判题专家，我会给你如下信息：\n" +
+            "```\n" +
+            "算法题目，\n" +
+            "算法题目描述：\n" +
+            "时间和内存限制要求\n" +
+            "题目的测试用例" +
+            "用户提交的代码，\n" +
+            "" +
+            "```\n" +
+            "请你根据以上信息，判断用户的代码是否正确，给我返回你的评价结果，200 个字左右，评价结果包括以下几方面内容：\n" +
+            "1、代码是否正确" +
+            "2、是否符合测试用例要求\n" +
+            "3、时间和空间复杂度是否符合要求";
 
     /**
      * 校验数据
@@ -210,5 +229,79 @@ public class CodeQuestionSubmitServiceImpl extends ServiceImpl<CodeQuestionSubmi
 
         return questionSubmitId;
     }
-    
+
+    @Override
+    public long doAiCodeQuestionSubmit(CodeQuestionSubmitAddRequest codeQuestionSubmitAddRequest, User loginUser) {
+        // 参数校验
+        String language = codeQuestionSubmitAddRequest.getLanguage();
+        String code = codeQuestionSubmitAddRequest.getCode();
+        Long questionId = codeQuestionSubmitAddRequest.getQuestionId();
+
+        CodeQuestionSubmitLanguageEnum codeLanguageEnum = CodeQuestionSubmitLanguageEnum.getEnumByValue(language);
+        ThrowUtils.throwIf(codeLanguageEnum == null, ErrorCode.NOT_FOUND_ERROR, "编程语言错误");
+        CodeQuestion codeQuestion = codeQuestionService.getById(questionId);
+        ThrowUtils.throwIf(codeQuestion == null, ErrorCode.NOT_FOUND_ERROR, "题目不存在");
+
+        // 先保存题目提交记录
+        CodeQuestionSubmit codeQuestionSubmit = new CodeQuestionSubmit();
+        codeQuestionSubmit.setLanguage(language);
+        codeQuestionSubmit.setCode(code);
+        codeQuestionSubmit.setStatus(CodeQuestionSubmitStatusEnum.WAITING.getValue());
+        codeQuestionSubmit.setQuestionId(questionId);
+        codeQuestionSubmit.setUserId(loginUser.getId());
+        save(codeQuestionSubmit);
+
+        // ai 判题
+        String title = codeQuestion.getTitle();
+        String content = codeQuestion.getContent();
+        JudgeConfig judgeConfig = JSONUtil.toBean(codeQuestion.getJudgeConfig(), JudgeConfig.class);
+        List<JudgeCase> judgeCaseList = JSONUtil.toList(codeQuestion.getJudgeCase(), JudgeCase.class);
+        String codeUserMessage = getCodeUserMessage(title, content, judgeConfig, judgeCaseList, code);
+        String result = aiManager.doSyncStableRequest(CODE_SYSTEM_MESSAGE, codeUserMessage);
+        Choice choice = JSONUtil.toBean(result, Choice.class);
+        result = choice.getMessage().getContent().toString();
+
+        CodeQuestionSubmit newCodeQuestionSubmit = new CodeQuestionSubmit();
+        newCodeQuestionSubmit.setId(codeQuestionSubmit.getId());
+        JudgeInfo judgeInfo = new JudgeInfo();
+        judgeInfo.setMessage(result);
+        newCodeQuestionSubmit.setJudgeInfo(JSONUtil.toJsonStr(judgeInfo));
+        newCodeQuestionSubmit.setStatus(CodeQuestionSubmitStatusEnum.SUCCESS.getValue());
+        updateById(newCodeQuestionSubmit);
+
+        return newCodeQuestionSubmit.getId();
+    }
+
+    /**
+     * 获取算法题的用户 prompt
+     *
+     * @param title
+     * @param content
+     * @param judgeConfig
+     * @param judgeCaseList
+     * @param code
+     * @return
+     */
+    private String getCodeUserMessage(String title, String content, JudgeConfig judgeConfig, List<JudgeCase> judgeCaseList, String code) {
+        StringBuilder userMessageBuilder = new StringBuilder();
+        userMessageBuilder.append("算法题目：").append(title).append("\n");
+        userMessageBuilder.append("算法题目描述：").append(content).append("\n");
+        userMessageBuilder.append("时间复杂度（ms）：").append(judgeConfig.getTimeLimit()).append("\n");
+        userMessageBuilder.append("空间复杂度（kb）：").append(judgeConfig.getMemoryLimit()).append("\n");
+        for (JudgeCase judgeCase : judgeCaseList) {
+            userMessageBuilder.append("题目测试用例：")
+                    .append("输入：").append(judgeCase.getInput())
+                    .append("输出：").append(judgeCase.getOutput())
+                    .append("\n");
+        }
+        userMessageBuilder.append("用户提交代码如下：\n").append(code);
+        return userMessageBuilder.toString();
+    }
+
+    public static void main(String[] args) {
+        String result = "{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"content\":\"评价结果：\\n1. 代码正确：用户提交的代码能够正确读取两个整数输入，并输出它们的和，符合题目要求。\\n2. 符合测试用例要求：提交的代码能够处理给定的测试用例，对于输入1 2输出3，输入11 21输出33，均能正确执行。\\n3. 时间和空间复杂度符合要求：该代码的时间复杂度为O(1)，因为它只执行了固定次数的操作，不依赖于输入大小。空间复杂度也为O(1)，因为它使用了固定数量的变量。代码没有使用额外的数据结构，因此空间使用符合要求。\",\"role\":\"assistant\"},\"delta\":null}";
+        Choice choice = JSONUtil.toBean(result, Choice.class);
+        System.out.println(choice.getMessage().getContent().toString());
+    }
+
 }
