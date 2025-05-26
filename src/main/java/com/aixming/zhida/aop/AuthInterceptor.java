@@ -24,7 +24,7 @@ public class AuthInterceptor implements HandlerInterceptor {
             return true;
         }
         String requestURI = request.getRequestURI();
-        if (requestURI.contains("/swagger") || requestURI.contains("/login") || requestURI.contains("/logout") || requestURI.contains("/register")) {
+        if (requestURI.contains("/swagger") || requestURI.contains("/user/login") || requestURI.contains("/logout") || requestURI.contains("/register")) {
             return true;
         }
         String token = request.getHeader("Authorization");

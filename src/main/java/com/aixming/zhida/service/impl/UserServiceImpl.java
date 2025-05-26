@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.aixming.zhida.common.ErrorCode;
 import com.aixming.zhida.constant.CommonConstant;
 import com.aixming.zhida.exception.BusinessException;
+import com.aixming.zhida.exception.ThrowUtils;
 import com.aixming.zhida.mapper.UserMapper;
 import com.aixming.zhida.model.dto.user.UserQueryRequest;
 import com.aixming.zhida.model.entity.User;
@@ -23,6 +24,7 @@ import org.springframework.util.DigestUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.aixming.zhida.constant.UserConstant.USER_LOGIN_STATE;
@@ -117,15 +119,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public User getLoginUser(HttpServletRequest request) {
-        // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
+        // 从请求域当中拿 userId
+        Map<String, Object> claims = (Map<String, Object>) request.getAttribute("loginUser");
+        Long userId = ((Number) claims.get("uid")).longValue();
+        ThrowUtils.throwIf(userId == null, ErrorCode.NOT_LOGIN_ERROR);
         // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        currentUser = this.getById(userId);
+        User currentUser = this.getById(userId);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
