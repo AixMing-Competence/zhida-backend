@@ -1,71 +1,40 @@
 package com.aixming.zhida.aop;
 
-import com.aixming.zhida.annotation.AuthCheck;
-import com.aixming.zhida.exception.BusinessException;
-import com.aixming.zhida.service.UserService;
 import com.aixming.zhida.common.ErrorCode;
-import com.aixming.zhida.model.entity.User;
-import com.aixming.zhida.model.enums.UserRoleEnum;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
-import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestAttributes;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import com.aixming.zhida.exception.BusinessException;
+import com.aixming.zhida.utils.JwtUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.method.HandlerMethod;
+import org.springframework.web.servlet.HandlerInterceptor;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 /**
- * 权限校验 AOP
- *
  * @author AixMing
+ * @since 2025-05-26 20:58:47
  */
-@Aspect
-@Component
-public class AuthInterceptor {
+@Slf4j
+public class AuthInterceptor implements HandlerInterceptor {
 
-    @Resource
-    private UserService userService;
-
-    /**
-     * 执行拦截
-     *
-     * @param joinPoint
-     * @param authCheck
-     * @return
-     */
-    @Around("@annotation(authCheck)")
-    public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable {
-        String mustRole = authCheck.mustRole();
-        RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
-        HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
-        // 当前登录用户
-        User loginUser = userService.getLoginUser(request);
-        UserRoleEnum mustRoleEnum = UserRoleEnum.getEnumByValue(mustRole);
-        // 不需要权限，放行
-        if (mustRoleEnum == null) {
-            return joinPoint.proceed();
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (!(handler instanceof HandlerMethod)) {
+            return true;
         }
-        // 必须有该权限才通过
-        UserRoleEnum userRoleEnum = UserRoleEnum.getEnumByValue(loginUser.getUserRole());
-        if (userRoleEnum == null) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        String requestURI = request.getRequestURI();
+        if (requestURI.contains("/swagger") || requestURI.contains("/login") || requestURI.contains("/logout") || requestURI.contains("/register")) {
+            return true;
         }
-        // 如果被封号，直接拒绝
-        if (UserRoleEnum.BAN.equals(userRoleEnum)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+        String token = request.getHeader("Authorization");
+        Map<String, Object> claims = JwtUtils.checkToken(token);
+        if (claims == null) {
+            log.info("拦截请求：{}", requestURI);
+            throw new BusinessException(ErrorCode.TOKEN_ERROR);
         }
-        // 必须有管理员权限
-        if (UserRoleEnum.ADMIN.equals(mustRoleEnum)) {
-            // 用户没有管理员权限，拒绝
-            if (!UserRoleEnum.ADMIN.equals(userRoleEnum)) {
-                throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
-            }
-        }
-        // 通过权限校验，放行
-        return joinPoint.proceed();
+        request.setAttribute("loginUser", claims);
+        return true;
     }
-}
 
+}
