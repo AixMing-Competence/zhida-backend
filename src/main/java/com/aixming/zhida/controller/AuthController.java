@@ -7,12 +7,10 @@ import com.aixming.zhida.exception.ThrowUtils;
 import com.aixming.zhida.model.dto.user.UserLoginRequest;
 import com.aixming.zhida.model.dto.user.UserLoginResponse;
 import com.aixming.zhida.service.AuthService;
-import com.aixming.zhida.utils.JwtUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -41,19 +39,13 @@ public class AuthController {
     }
 
     @GetMapping("/refresh_token")
-    public BaseResponse<UserLoginResponse> refreshToken(@RequestHeader("Authorization") String token) {
-        Map<String, Object> claims = JwtUtils.checkToken(token);
-        ThrowUtils.throwIf(claims == null, ErrorCode.TOKEN_ERROR);
-        Object uid = claims.get("uid");
-        Object role = claims.get("role");
-        HashMap<String, Object> newClaims = new HashMap<String, Object>() {{
-            put("uid", uid);
-            put("role", role);
-        }};
-        long expireTime = 24 * 60 * 60 * 1000L;
-        UserLoginResponse userLoginResponse = new UserLoginResponse();
-        userLoginResponse.setAccessToken(JwtUtils.createToken(claims, expireTime));
-        userLoginResponse.setRefreshToken(JwtUtils.createToken(claims, 2 * expireTime));
+    public BaseResponse<UserLoginResponse> refreshToken(HttpServletRequest request) {
+//        Map<String, Object> claims = JwtUtils.checkToken(token);
+//        ThrowUtils.throwIf(claims == null, ErrorCode.TOKEN_ERROR);
+        Map<String, Object> claims = (Map<String, Object>) request.getAttribute("loginUser");
+        String refreshToken = request.getHeader("Authorization");
+        UserLoginResponse userLoginResponse = authService.refreshToken(refreshToken, claims);
+        ThrowUtils.throwIf(userLoginResponse == null, ErrorCode.SYSTEM_ERROR);
         return ResultUtils.success(userLoginResponse);
     }
 

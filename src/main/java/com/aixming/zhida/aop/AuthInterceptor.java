@@ -57,7 +57,7 @@ public class AuthInterceptor implements HandlerInterceptor {
                         requestURI.contains("/logout") ||
                         requestURI.contains("/register") ||
                         requestURI.contains("/auth/login") ||
-                        requestURI.contains("/auth/refresh_token") ||
+//                        requestURI.contains("/auth/refresh_token") ||
                         requestURI.contains("/error")
         ) {
             return true;

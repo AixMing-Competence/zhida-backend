@@ -15,7 +15,7 @@
 */
     
 -- 创建库
-create database if not exists yudada;
+create database if not exists zhida;
 
 -- 切换库
 use yudada;
