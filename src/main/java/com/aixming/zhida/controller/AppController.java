@@ -5,15 +5,18 @@ import com.aixming.zhida.common.BaseResponse;
 import com.aixming.zhida.common.DeleteRequest;
 import com.aixming.zhida.common.ErrorCode;
 import com.aixming.zhida.common.ResultUtils;
+import com.aixming.zhida.constant.TokenConstant;
 import com.aixming.zhida.constant.UserConstant;
 import com.aixming.zhida.exception.BusinessException;
 import com.aixming.zhida.exception.ThrowUtils;
 import com.aixming.zhida.model.dto.app.*;
 import com.aixming.zhida.model.entity.App;
+import com.aixming.zhida.model.entity.AppThumb;
 import com.aixming.zhida.model.entity.User;
 import com.aixming.zhida.model.enums.ReviewStatusEnum;
 import com.aixming.zhida.model.vo.AppVO;
 import com.aixming.zhida.service.AppService;
+import com.aixming.zhida.service.AppThumbService;
 import com.aixming.zhida.service.UserService;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 /**
  * 应用接口
@@ -38,6 +42,9 @@ public class AppController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AppThumbService appThumbService;
 
     // region 增删改查
 
@@ -247,6 +254,14 @@ public class AppController {
         // 操作数据库
         boolean result = appService.updateById(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
+
+    @PostMapping("/thumb")
+    public BaseResponse<Boolean> doThumb(long appId, HttpServletRequest request) {
+        Map<String, Object> claims = (Map<String, Object>) request.getAttribute("loginUser");
+        long userId = ((Number) claims.get(TokenConstant.UID)).longValue();
+        appThumbService.doThumb(appId, userId);
         return ResultUtils.success(true);
     }
 }

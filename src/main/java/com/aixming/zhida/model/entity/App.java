@@ -11,9 +11,10 @@ import java.util.Date;
 
 /**
  * 应用
+ *
  * @TableName app
  */
-@TableName(value ="app")
+@TableName(value = "app")
 @Data
 public class App implements Serializable {
     /**
@@ -46,6 +47,8 @@ public class App implements Serializable {
      * 评分策略（0-自定义，1-AI）
      */
     private Integer scoringStrategy;
+
+    private int thumbNum;
 
     /**
      * 审核状态：0-待审核, 1-通过, 2-拒绝

@@ -61,6 +61,16 @@ public class AppVO implements Serializable {
     private Long reviewerId;
 
     /**
+     * 点赞数
+     */
+    private Integer thumbNum;
+
+    /**
+     * 是否被我点赞
+     */
+    private Boolean isThumbByMe = false;
+
+    /**
      * 审核时间
      */
     private Date reviewTime;

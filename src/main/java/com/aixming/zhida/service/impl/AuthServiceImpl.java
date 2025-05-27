@@ -59,7 +59,7 @@ public class AuthServiceImpl implements AuthService {
         claims.put("uid", user.getId());
         claims.put("role", user.getUserRole());
         UserLoginResponse userLoginResponse = new UserLoginResponse();
-        long expireTime = 10 * 1000L;
+        long expireTime = 24 * 60 * 60 * 1000L;
         userLoginResponse.setAccessToken(JwtUtils.createToken(claims, expireTime));
         userLoginResponse.setRefreshToken(JwtUtils.createToken(claims, 2 * expireTime));
         return userLoginResponse;
@@ -76,7 +76,7 @@ public class AuthServiceImpl implements AuthService {
             put("uid", userId);
             put("role", role);
         }};
-        long expireTime = 10 * 1000L;
+        long expireTime = 24 * 60 * 60 * 1000L;
         UserLoginResponse userLoginResponse = new UserLoginResponse();
         try {
             boolean locked = rLock.tryLock(2, -1, TimeUnit.SECONDS);

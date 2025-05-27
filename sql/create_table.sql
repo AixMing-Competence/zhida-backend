@@ -35,6 +35,7 @@ create table if not exists app
     appIcon         varchar(1024)                      null comment '应用图标',
     appType         tinyint  default 0                 not null comment '应用类型（0-得分类，1-测评类）',
     scoringStrategy tinyint  default 0                 not null comment '评分策略（0-自定义，1-AI）',
+    thumbNum        int      default 0                 not null comment '点赞数',
     reviewStatus    int      default 0                 not null comment '审核状态：0-待审核, 1-通过, 2-拒绝',
     reviewMessage   varchar(512)                       null comment '审核信息',
     reviewerId      bigint                             null comment '审核人 id',
@@ -45,6 +46,22 @@ create table if not exists app
     isDelete        tinyint  default 0                 not null comment '是否删除',
     index idx_appName (appName)
 ) comment '应用' collate = utf8mb4_unicode_ci;
+
+alter table app
+    add thumbNum int default 0 not null comment '点赞数' after scoringStrategy;
+
+-- 点赞表（硬删除）
+use zhida;
+create table if not exists app_thumb
+(
+    id         bigint auto_increment comment 'id' primary key,
+    appId      bigint                             not null comment '应用 id',
+    userId     bigint                             not null comment '创建用户 id',
+    createTime datetime default current_timestamp not null comment '创建时间',
+    updateTime datetime default current_timestamp not null on update current_timestamp comment '更新时间',
+    index idx_appId (appId),
+    index idx_userId (userId)
+) comment '应用点赞表' collate = utf8mb4_unicode_ci;
 
 -- 选择题题目表
 create table if not exists question
@@ -62,21 +79,21 @@ create table if not exists question
 -- 代码题目表
 create table if not exists code_question
 (
-    id         bigint auto_increment comment 'id' primary key,
-    title      varchar(512)                       null comment '标题',
-    content    text                               null comment '内容',
-    tags       varchar(1024)                      null comment '标签列表（json 数组）',
-    answer     text                               null comment '题目答案',
-    submitNum  int  default 0 not null comment '题目提交数',
-    acceptedNum  int  default 0 not null comment '题目通过数',
-    judgeCase text null comment '判题用例（json 数组）',
-    judgeConfig text null comment '判题配置（json 对象）',
-    thumbNum   int      default 0                 not null comment '点赞数',
-    favourNum  int      default 0                 not null comment '收藏数',
-    userId     bigint                             not null comment '创建用户 id',
-    createTime datetime default CURRENT_TIMESTAMP not null comment '创建时间',
-    updateTime datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
-    isDelete   tinyint  default 0                 not null comment '是否删除',
+    id          bigint auto_increment comment 'id' primary key,
+    title       varchar(512)                       null comment '标题',
+    content     text                               null comment '内容',
+    tags        varchar(1024)                      null comment '标签列表（json 数组）',
+    answer      text                               null comment '题目答案',
+    submitNum   int      default 0                 not null comment '题目提交数',
+    acceptedNum int      default 0                 not null comment '题目通过数',
+    judgeCase   text                               null comment '判题用例（json 数组）',
+    judgeConfig text                               null comment '判题配置（json 对象）',
+    thumbNum    int      default 0                 not null comment '点赞数',
+    favourNum   int      default 0                 not null comment '收藏数',
+    userId      bigint                             not null comment '创建用户 id',
+    createTime  datetime default CURRENT_TIMESTAMP not null comment '创建时间',
+    updateTime  datetime default CURRENT_TIMESTAMP not null on update CURRENT_TIMESTAMP comment '更新时间',
+    isDelete    tinyint  default 0                 not null comment '是否删除',
     index idx_userId (userId)
 ) comment '题目' collate = utf8mb4_unicode_ci;
 
@@ -95,7 +112,7 @@ create table if not exists code_question_submit
     isDelete   tinyint  default 0                 not null comment '是否删除',
     index idx_questionId (questionId),
     index idx_userId (userId)
-) comment '题目提交'  collate = utf8mb4_unicode_ci;
+) comment '题目提交' collate = utf8mb4_unicode_ci;
 
 -- 评分结果表
 create table if not exists scoring_result

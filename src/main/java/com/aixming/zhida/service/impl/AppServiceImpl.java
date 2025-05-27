@@ -3,10 +3,12 @@ package com.aixming.zhida.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import com.aixming.zhida.common.ErrorCode;
 import com.aixming.zhida.constant.CommonConstant;
+import com.aixming.zhida.constant.TokenConstant;
 import com.aixming.zhida.exception.ThrowUtils;
 import com.aixming.zhida.mapper.AppMapper;
 import com.aixming.zhida.model.dto.app.AppQueryRequest;
 import com.aixming.zhida.model.entity.App;
+import com.aixming.zhida.model.entity.AppThumb;
 import com.aixming.zhida.model.entity.User;
 import com.aixming.zhida.model.enums.AppTypeEnum;
 import com.aixming.zhida.model.enums.ReviewStatusEnum;
@@ -14,8 +16,10 @@ import com.aixming.zhida.model.enums.ScoringStrategyEnum;
 import com.aixming.zhida.model.vo.AppVO;
 import com.aixming.zhida.model.vo.UserVO;
 import com.aixming.zhida.service.AppService;
+import com.aixming.zhida.service.AppThumbService;
 import com.aixming.zhida.service.UserService;
 import com.aixming.zhida.utils.SqlUtils;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -42,6 +46,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AppThumbService appThumbService;
 
     /**
      * 校验数据
@@ -185,6 +192,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         Set<Long> userIdSet = appList.stream().map(App::getUserId).collect(Collectors.toSet());
         Map<Long, List<User>> userIdUserListMap = userService.listByIds(userIdSet).stream()
                 .collect(Collectors.groupingBy(User::getId));
+        Map<String, Object> claims = (Map<String, Object>) request.getAttribute("loginUser");
+        long loginUserId = ((Number) claims.get(TokenConstant.UID)).longValue();
+        // 当前登录用户的点赞列表
+        LambdaQueryWrapper<AppThumb> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AppThumb::getUserId, loginUserId);
+        List<Long> userThumbAppIds = appThumbService.list(queryWrapper).stream().map(AppThumb::getAppId).collect(Collectors.toList());
         // 填充信息
         appVOList.forEach(appVO -> {
             Long userId = appVO.getUserId();
@@ -193,6 +206,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                 user = userIdUserListMap.get(userId).get(0);
             }
             appVO.setUser(userService.getUserVO(user));
+            if (userThumbAppIds.contains(appVO.getId())) {
+                appVO.setIsThumbByMe(true);
+            }
         });
         // endregion
 
