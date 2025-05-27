@@ -35,6 +35,11 @@ public class AuthController {
         return ResultUtils.success(userLoginResponse);
     }
 
+    @GetMapping("/logout")
+    public BaseResponse<Boolean> userLogout() {
+        return ResultUtils.success(true);
+    }
+
     @GetMapping("/refresh_token")
     public BaseResponse<UserLoginResponse> refreshToken(@RequestHeader("Authorization") String token) {
         Map<String, Object> claims = JwtUtils.checkToken(token);
@@ -45,11 +50,11 @@ public class AuthController {
             put("uid", uid);
             put("role", role);
         }};
-        int expireTime = 24 * 60 * 60 * 1000;
+        long expireTime = 24 * 60 * 60 * 1000L;
         UserLoginResponse userLoginResponse = new UserLoginResponse();
         userLoginResponse.setAccessToken(JwtUtils.createToken(claims, expireTime));
         userLoginResponse.setRefreshToken(JwtUtils.createToken(claims, 2 * expireTime));
         return ResultUtils.success(userLoginResponse);
     }
-    
+
 }

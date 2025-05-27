@@ -22,7 +22,11 @@ public class JwtUtils {
     private static final String secret = "askjdklashjflsajdfka";
 
     public static String createToken(Map<String, Object> claims, long expireTime) {
-        return Jwts.builder().signWith(SignatureAlgorithm.HS256, secret).addClaims(claims).setIssuedAt(new Date()).setExpiration(new Date(System.currentTimeMillis() + expireTime)).compact();
+        return Jwts.builder()
+                .signWith(SignatureAlgorithm.HS256, secret)
+                .addClaims(claims).setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expireTime))
+                .compact();
     }
 
     public static Map<String, Object> checkToken(String token) {

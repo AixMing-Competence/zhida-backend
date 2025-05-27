@@ -22,4 +22,3 @@ public @interface AuthCheck {
     String mustRole() default "";
 
 }
-

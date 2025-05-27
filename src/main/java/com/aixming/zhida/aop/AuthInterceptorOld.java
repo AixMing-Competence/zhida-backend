@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 //@Component
 public class AuthInterceptorOld {
 
-//    @Resource
+    //    @Resource
     private UserService userService;
 
     /**

@@ -47,7 +47,7 @@ public class AuthServiceImpl implements AuthService {
         claims.put("uid", user.getId());
         claims.put("role", user.getUserRole());
         UserLoginResponse userLoginResponse = new UserLoginResponse();
-        int expireTime = 24 * 60 * 60 * 1000;
+        long expireTime = 24 * 60 * 60 * 1000L;
         userLoginResponse.setAccessToken(JwtUtils.createToken(claims, expireTime));
         userLoginResponse.setRefreshToken(JwtUtils.createToken(claims, 2 * expireTime));
         return userLoginResponse;
