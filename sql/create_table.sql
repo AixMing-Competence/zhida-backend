@@ -151,3 +151,15 @@ create table if not exists user_answer
     index idx_appId (appId),
     index idx_userId (userId)
 ) comment '用户答题记录' collate = utf8mb4_unicode_ci;
+
+create table if not exists vip_order
+(
+    id         bigint auto_increment primary key comment '订单号',
+    userId     bigint                             not null comment '下单用户 id',
+    status     int                                not null default 0 comment '订单状态（0：待支付，1：已支付，2：已完成，3：已取消，4：退款中，5：已退款，6：已关闭）',
+    payTime    datetime comment '支付时间',
+    refundTime datetime comment '退款时间',
+    cancelTime datetime comment '取消时间',
+    createTime datetime default current_timestamp not null comment '下单时间',
+    updateTime datetime default current_timestamp not null on update current_timestamp comment '更新时间'
+) comment 'vip 订单' collate = utf8mb4_unicode_ci;

@@ -22,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 
 /**
@@ -40,16 +39,6 @@ public class FileController {
 
     @Resource
     private CosManager cosManager;
-
-    public static void main(String[] args) throws IOException {
-        String tempDirPath = System.getProperty("user.dir") + File.separator + ".temp";
-        String filepath = "/1/hello1.png";
-        File file = new File(tempDirPath, filepath);
-        file.createNewFile();
-//        if (!file.exists()) {
-//            FileUtil.touch(file);
-//        }
-    }
 
     /**
      * 文件上传

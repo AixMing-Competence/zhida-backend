@@ -236,4 +236,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                 sortField);
         return queryWrapper;
     }
+
+    public void test() {
+        User one = lambdaQuery().eq(User::getId, 1).one();
+        System.out.println(one);
+    }
 }
