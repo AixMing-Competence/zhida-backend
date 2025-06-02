@@ -11,7 +11,6 @@ import com.aixming.zhida.exception.BusinessException;
 import com.aixming.zhida.exception.ThrowUtils;
 import com.aixming.zhida.model.dto.app.*;
 import com.aixming.zhida.model.entity.App;
-import com.aixming.zhida.model.entity.AppThumb;
 import com.aixming.zhida.model.entity.User;
 import com.aixming.zhida.model.enums.ReviewStatusEnum;
 import com.aixming.zhida.model.vo.AppVO;
@@ -257,11 +256,33 @@ public class AppController {
         return ResultUtils.success(true);
     }
 
-    @PostMapping("/thumb")
+    /**
+     * 用户点赞
+     *
+     * @param appId
+     * @param request
+     * @return
+     */
+    @PostMapping("/thumb/do")
     public BaseResponse<Boolean> doThumb(long appId, HttpServletRequest request) {
         Map<String, Object> claims = (Map<String, Object>) request.getAttribute("loginUser");
         long userId = ((Number) claims.get(TokenConstant.UID)).longValue();
         appThumbService.doThumb(appId, userId);
         return ResultUtils.success(true);
     }
+
+    /**
+     * 用户取消点赞
+     *
+     * @param appId
+     * @return
+     */
+    @PostMapping("/thumb/cancel")
+    public BaseResponse<Boolean> cancelThumb(long appId, HttpServletRequest request) {
+        Map<String, Object> claims = (Map<String, Object>) request.getAttribute("loginUser");
+        long userId = ((Number) claims.get(TokenConstant.UID)).longValue();
+        appThumbService.cancelThumb(appId, userId);
+        return ResultUtils.success(true);
+    }
+
 }

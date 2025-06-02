@@ -11,4 +11,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface AppThumbService extends IService<AppThumb> {
 
     void doThumb(long appId, long userId);
+
+    void cancelThumb(long appId, long userId);
 }

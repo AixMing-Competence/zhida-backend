@@ -39,8 +39,22 @@ public class AppThumbServiceImpl extends ServiceImpl<AppThumbMapper, AppThumb>
         app.setThumbNum((int) count);
         appMapper.updateById(app);
     }
+
+    @Override
+    @Transactional
+    public void cancelThumb(long appId, long userId) {
+        // 删除记录
+        LambdaQueryWrapper<AppThumb> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(AppThumb::getAppId, appId);
+        queryWrapper.eq(AppThumb::getUserId, userId);
+        remove(queryWrapper);
+        // 修改 app 统计数据
+        queryWrapper.clear();
+        queryWrapper.eq(AppThumb::getAppId, appId);
+        long count = count(queryWrapper);
+        App app = new App();
+        app.setId(appId);
+        app.setThumbNum((int) count);
+        appMapper.updateById(app);
+    }
 }
-
-
-
-
