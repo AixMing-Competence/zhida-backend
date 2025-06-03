@@ -1,9 +1,10 @@
 package com.aixming.zhida.model.enums;
 
+import org.apache.commons.lang3.ObjectUtils;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * 用户角色枚举
@@ -12,8 +13,12 @@ import org.apache.commons.lang3.ObjectUtils;
  */
 public enum UserRoleEnum {
 
+    /**
+     * 用户角色划分
+     */
     USER("用户", "user"),
     ADMIN("管理员", "admin"),
+    VIP("高级用户", "vip"),
     BAN("被封号", "ban");
 
     private final String text;

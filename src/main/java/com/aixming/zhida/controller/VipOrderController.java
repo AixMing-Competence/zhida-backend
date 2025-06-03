@@ -37,4 +37,5 @@ public class VipOrderController {
         vipOrderService.save(vipOrder);
         return ResultUtils.success(vipOrder.getId());
     }
+
 }
