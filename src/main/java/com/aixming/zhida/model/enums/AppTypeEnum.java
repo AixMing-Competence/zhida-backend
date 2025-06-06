@@ -16,6 +16,9 @@ import java.util.stream.Collectors;
 @Getter
 public enum AppTypeEnum {
 
+    /**
+     * 应用类型枚举
+     */
     SCORE("得分类", 0),
     TEST("测评类", 1);
 

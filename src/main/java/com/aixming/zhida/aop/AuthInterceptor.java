@@ -45,6 +45,8 @@ public class AuthInterceptor implements HandlerInterceptor {
 //        return joinPoint.proceed();
 //    }
 
+    private static final String[] whiteList = {"/alipay", "/webjars", "/login", "/register", "/logout", "/doc.html"};
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!(handler instanceof HandlerMethod)) {
@@ -58,7 +60,8 @@ public class AuthInterceptor implements HandlerInterceptor {
                         requestURI.contains("/register") ||
                         requestURI.contains("/auth/login") ||
 //                        requestURI.contains("/auth/refresh_token") ||
-                        requestURI.contains("/error")
+                        requestURI.contains("/error") ||
+                        requestURI.contains("/alipay")
         ) {
             return true;
         }

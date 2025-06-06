@@ -21,7 +21,7 @@ import java.util.Map;
 @Slf4j
 public class AuthFilter implements Filter {
 
-    private static final String[] whiteList = {"/webjars", "/login", "/register", "/logout", "/doc.html"};
+    private static final String[] whiteList = {"/alipay", "/webjars", "/login", "/register", "/logout", "/doc.html"};
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
