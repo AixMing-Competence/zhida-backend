@@ -13,5 +13,6 @@ public class AliPay {
     private double totalAmount;
     private String subject;
     private String alipayTraceNo;
+    private String userId;
 
 }

@@ -2,6 +2,10 @@ package com.aixming.zhida.controller;
 
 import com.aixming.zhida.config.AliPayConfig;
 import com.aixming.zhida.model.dto.alipay.AliPay;
+import com.aixming.zhida.model.entity.User;
+import com.aixming.zhida.model.entity.VipOrder;
+import com.aixming.zhida.model.enums.UserRoleEnum;
+import com.aixming.zhida.service.UserService;
 import com.aixming.zhida.service.VipOrderService;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -15,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,6 +43,9 @@ public class AliPayController {
     @Resource
     private VipOrderService vipOrderService;
 
+    @Resource
+    private UserService userService;
+
     @GetMapping("/pay") // &subject=xxx&traceNo=xxx&totalAmount=xxx
     public void pay(AliPay aliPay, HttpServletResponse httpResponse) throws Exception {
         AlipayTradePagePayRequest request = new AlipayTradePagePayRequest();
@@ -44,6 +53,7 @@ public class AliPayController {
         request.setBizContent("{\"out_trade_no\":\"" + aliPay.getTraceNo() + "\","
                 + "\"total_amount\":\"" + aliPay.getTotalAmount() + "\","
                 + "\"subject\":\"" + aliPay.getSubject() + "\","
+                + "\"userId\":\"" + aliPay.getUserId() + "\","
                 + "\"product_code\":\"FAST_INSTANT_TRADE_PAY\"}");
         String form = "";
         try {
@@ -71,6 +81,9 @@ public class AliPayController {
                 // System.out.println(name + " = " + request.getParameter(name));
             }
 
+            /**
+             * 订单号
+             */
             String tradeNo = params.get("out_trade_no");
             String gmtPayment = params.get("gmt_payment");
             String alipayTradeNo = params.get("trade_no");
@@ -85,11 +98,22 @@ public class AliPayController {
                 System.out.println("买家在支付宝唯一id: " + params.get("buyer_id"));
                 System.out.println("买家付款时间: " + params.get("gmt_payment"));
                 System.out.println("买家付款金额: " + params.get("buyer_pay_amount"));
-                // 更新订单未已支付
+                // 更新订单为已支付
+                VipOrder vipOrder = new VipOrder();
+                vipOrder.setId(Long.parseLong(tradeNo));
+                Date payTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(gmtPayment);
+                vipOrder.setPayTime(payTime);
+                vipOrderService.updateById(vipOrder);
+                // 修改用户权限
+                long userId = Long.parseLong(params.get("userId"));
+                User user = new User();
+                user.setId(userId);
+                user.setUserRole(UserRoleEnum.VIP.getValue());
+                userService.save(user);
                 System.out.println("回调执行成功");
             }
         }
         return "success";
     }
-
+    
 }
